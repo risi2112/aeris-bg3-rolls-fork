@@ -1,3 +1,11 @@
+## v14.0.4
+
+### Fixed
+
+-   3D dice on newer Dice So Nice versions: `Dice3D.ALL_CUSTOMIZATION` no longer exists, so the
+    player's dice appearance is now read through fallbacks (`APPEARANCE`, user flags + defaults)
+-   A die is no longer dropped when the "modified total" face can't be prepared
+
 ## v14.0.3
 
 ### Fixed

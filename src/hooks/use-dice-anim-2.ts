@@ -171,13 +171,20 @@ export const useDiceAnimation2 = (
                     delay: 0.1,
                     ease: "power2.out",
                     onStart: () => {
-                        overrideDieFaceLabel(
-                            targetMesh,
-                            "d20",
-                            actor,
-                            configs[maxIndex].result + 1,
-                            configs[maxIndex].modified.toString()
-                        );
+                        try {
+                            overrideDieFaceLabel(
+                                targetMesh,
+                                "d20",
+                                actor,
+                                configs[maxIndex].result + 1,
+                                configs[maxIndex].modified.toString()
+                            );
+                        } catch (err) {
+                            console.warn(
+                                "aeris-bg3-rolls | Could not show the modified total on the die",
+                                err
+                            );
+                        }
                     },
                 },
                 "<"

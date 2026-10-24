@@ -232,13 +232,69 @@ class DiceBoxManager {
 
 export const diceBoxManager = DiceBoxManager.instance;
 
+/**
+ * Work out a user's Dice So Nice appearance.
+ * Older Dice So Nice versions expose `Dice3D.ALL_CUSTOMIZATION(user, factory)`; newer ones
+ * (the ones that run on Foundry V14) no longer have it, so fall back through the other ways
+ * Dice So Nice has exposed the same data.
+ */
+function getUserAppearance(user: User, factory: DiceFactory): any {
+    const dice3d = getDice3d() as any;
+    const ctor = dice3d?.constructor as any;
+    const sources: [string, () => any][] = [
+        ["Dice3D.ALL_CUSTOMIZATION", () => ctor?.ALL_CUSTOMIZATION?.(user, factory)?.appearance],
+        ["Dice3D.APPEARANCE", () => ctor?.APPEARANCE?.(user)],
+        ["dice3d.ALL_CUSTOMIZATION", () => dice3d?.ALL_CUSTOMIZATION?.(user, factory)?.appearance],
+        ["dice3d.APPEARANCE", () => dice3d?.APPEARANCE?.(user)],
+        ["dice3d.getAppearance", () => dice3d?.getAppearance?.(user)],
+    ];
+    for (const [, get] of sources) {
+        try {
+            const appearance = get();
+            if (appearance && typeof appearance === "object") return appearance;
+        } catch {
+            // try the next one
+        }
+    }
+
+    // Last resort: the user's saved Dice So Nice appearance on top of the defaults
+    let defaults: any = { global: {} };
+    try {
+        defaults = ctor?.DEFAULT_APPEARANCE?.(user) ?? defaults;
+    } catch {
+        // keep the empty default
+    }
+    const flag = (user as any)?.getFlag?.("dice-so-nice", "appearance");
+    if (flag || ctor?.DEFAULT_APPEARANCE) {
+        return foundry.utils.mergeObject(defaults, flag ?? {}, { inplace: false });
+    }
+
+    // Nothing worked: say what this Dice So Nice version does offer, so it can be wired up
+    const offered = (obj: any) =>
+        obj
+            ? Object.getOwnPropertyNames(obj)
+                  .filter((n) => /appear|custom|config|setting/i.test(n))
+                  .join(", ") || "none"
+            : "n/a";
+    throw new Error(
+        `can't read the Dice So Nice appearance. Dice3D offers: ${offered(ctor)}; ` +
+            `dice3d offers: ${offered(dice3d ? Object.getPrototypeOf(dice3d) : null)}`
+    );
+}
+
 export function getAppearance(
     user: User,
     type: keyof typeof faceQuats,
     factory: DiceFactory
 ) {
-    const dsnConfig = (
-        getDice3d().constructor as typeof Dice3D
-    ).ALL_CUSTOMIZATION(user, factory);
-    return factory.getAppearanceForDice(dsnConfig.appearance, type);
+    const appearance = getUserAppearance(user, factory);
+    if (typeof (factory as any).getAppearanceForDice === "function") {
+        return factory.getAppearanceForDice(appearance, type);
+    }
+    // Newer versions may have dropped the per-die helper: merge the die's own settings over global
+    return foundry.utils.mergeObject(
+        appearance.global ?? {},
+        appearance[type] ?? {},
+        { inplace: false }
+    );
 }

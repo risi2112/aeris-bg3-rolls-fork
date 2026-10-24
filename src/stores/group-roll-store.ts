@@ -193,115 +193,125 @@ export function setupGroupRollHooks() {
 
                     const diceFactory = diceBoxManager.getFactory();
 
-                    if (mesh && maxIndex === i && diceFactory) {
-                        const user: User =
-                            game.users?.find(
-                                (u) => u.character?.uuid === actor.uuid
-                            ) ??
-                            game.users?.find((u) => u.isGM) ??
-                            game.user!;
+                    // Pre-build the "modified total" face for the winning die. If this Dice So Nice
+                    // version doesn't support it, the die still rolls, just without the total.
+                    try {
+                        if (mesh && maxIndex === i && diceFactory) {
+                            const user: User =
+                                game.users?.find(
+                                    (u) => u.character?.uuid === actor.uuid
+                                ) ??
+                                game.users?.find((u) => u.isGM) ??
+                                game.user!;
 
-                        const appearance = getAppearance(
-                            user,
-                            "d20",
-                            diceFactory
-                        );
+                            const appearance = getAppearance(
+                                user,
+                                "d20",
+                                diceFactory
+                            );
 
-                        // Recreate the dice object
-                        let base = diceFactory.getPresetBySystem(
-                            "d20",
-                            appearance.system
-                        );
+                            // Recreate the dice object
+                            let base = diceFactory.getPresetBySystem(
+                                "d20",
+                                appearance.system
+                            );
 
-                        if (!base) return;
+                            // (was a bare "return", which also skipped registering this die)
+                            if (!base) throw new Error("no d20 preset for this dice system");
 
-                        const diceobj = {
-                            ...base,
-                            labels: [...base.labels],
-                        };
+                            const diceobj = {
+                                ...base,
+                                labels: [...base.labels],
+                            };
 
-                        const result = dice[i];
-                        const faceIndex = result + 1;
-                        const newValue = r.roll.total ?? 1;
+                            const result = dice[i];
+                            const faceIndex = result + 1;
+                            const newValue = r.roll.total ?? 1;
 
-                        if (
-                            faceIndex >= 0 &&
-                            faceIndex < diceobj.labels.length
-                        ) {
-                            diceobj.labels[faceIndex] = newValue.toString();
+                            if (
+                                faceIndex >= 0 &&
+                                faceIndex < diceobj.labels.length
+                            ) {
+                                diceobj.labels[faceIndex] = newValue.toString();
+                            }
+
+                            let oldMaterialData: MaterialData;
+                            if (Array.isArray(mesh.material)) {
+                                oldMaterialData =
+                                    mesh.material[0].userData?.materialData;
+                            } else {
+                                oldMaterialData =
+                                    mesh.material.userData?.materialData;
+                            }
+
+                            const materialData = diceFactory.generateMaterialData(
+                                diceobj,
+                                appearance
+                            );
+
+                            if (oldMaterialData) {
+                                // Preserve colors
+                                materialData.foreground =
+                                    oldMaterialData.foreground ??
+                                    materialData.foreground;
+                                materialData.background =
+                                    oldMaterialData.background ??
+                                    materialData.background;
+                                materialData.outline =
+                                    oldMaterialData.outline ?? materialData.outline;
+                                materialData.edge =
+                                    oldMaterialData.edge ?? materialData.edge;
+
+                                materialData.material =
+                                    oldMaterialData.material ??
+                                    materialData.material;
+
+                                // Preserve font / scale / ghost state
+                                materialData.font =
+                                    oldMaterialData.font ?? materialData.font;
+                                materialData.fontScale =
+                                    oldMaterialData.fontScale ??
+                                    materialData.fontScale;
+                                materialData.isGhost =
+                                    oldMaterialData.isGhost ?? materialData.isGhost;
+                            }
+
+                            // Create new cache key (must be unique to force refresh)
+                            let baseMaterialCacheString = foundry.utils.randomID();
+
+                            const scopedTextureCache =
+                                diceBoxManager.getBox()!.renderer
+                                    .scopedTextureCache;
+
+                            // Create new material
+                            let newMaterial = diceFactory.createMaterial(
+                                scopedTextureCache,
+                                baseMaterialCacheString,
+                                diceobj,
+                                materialData
+                            );
+
+                            const processed = diceFactory.systems
+                                .get(appearance.system)
+                                ?.processMaterial("d20", newMaterial, appearance);
+
+                            if (processed) newMaterial = processed;
+
+                            if (Array.isArray(mesh.material)) {
+                                newMaterial.onBeforeCompile =
+                                    mesh.material[0].onBeforeCompile;
+                            } else {
+                                newMaterial.onBeforeCompile =
+                                    mesh.material.onBeforeCompile;
+                            }
+
+                            mesh.userData.modifierMaterial = newMaterial;
                         }
-
-                        let oldMaterialData: MaterialData;
-                        if (Array.isArray(mesh.material)) {
-                            oldMaterialData =
-                                mesh.material[0].userData?.materialData;
-                        } else {
-                            oldMaterialData =
-                                mesh.material.userData?.materialData;
-                        }
-
-                        const materialData = diceFactory.generateMaterialData(
-                            diceobj,
-                            appearance
+                    } catch (err) {
+                        console.warn(
+                            "aeris-bg3-rolls | Could not prepare the modified-total face",
+                            err
                         );
-
-                        if (oldMaterialData) {
-                            // Preserve colors
-                            materialData.foreground =
-                                oldMaterialData.foreground ??
-                                materialData.foreground;
-                            materialData.background =
-                                oldMaterialData.background ??
-                                materialData.background;
-                            materialData.outline =
-                                oldMaterialData.outline ?? materialData.outline;
-                            materialData.edge =
-                                oldMaterialData.edge ?? materialData.edge;
-
-                            materialData.material =
-                                oldMaterialData.material ??
-                                materialData.material;
-
-                            // Preserve font / scale / ghost state
-                            materialData.font =
-                                oldMaterialData.font ?? materialData.font;
-                            materialData.fontScale =
-                                oldMaterialData.fontScale ??
-                                materialData.fontScale;
-                            materialData.isGhost =
-                                oldMaterialData.isGhost ?? materialData.isGhost;
-                        }
-
-                        // Create new cache key (must be unique to force refresh)
-                        let baseMaterialCacheString = foundry.utils.randomID();
-
-                        const scopedTextureCache =
-                            diceBoxManager.getBox()!.renderer
-                                .scopedTextureCache;
-
-                        // Create new material
-                        let newMaterial = diceFactory.createMaterial(
-                            scopedTextureCache,
-                            baseMaterialCacheString,
-                            diceobj,
-                            materialData
-                        );
-
-                        const processed = diceFactory.systems
-                            .get(appearance.system)
-                            ?.processMaterial("d20", newMaterial, appearance);
-
-                        if (processed) newMaterial = processed;
-
-                        if (Array.isArray(mesh.material)) {
-                            newMaterial.onBeforeCompile =
-                                mesh.material[0].onBeforeCompile;
-                        } else {
-                            newMaterial.onBeforeCompile =
-                                mesh.material.onBeforeCompile;
-                        }
-
-                        mesh.userData.modifierMaterial = newMaterial;
                     }
 
                     if (mesh) {
