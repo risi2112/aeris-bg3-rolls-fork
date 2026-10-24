@@ -152,7 +152,11 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
     return (
         <>
             <div
-                className="flex items-center justify-center relative w-[120px] h-[120px] pointer-events-auto"
+                className={cn(
+                    "flex items-center justify-center relative w-[120px] h-[120px] pointer-events-auto",
+                    actor.isOwner && !rollResult && "cursor-pointer"
+                )}
+                title={actor.isOwner && !rollResult ? "Click to roll" : undefined}
                 onClick={handleRollClick}
             >
                 <div ref={elementRef}>

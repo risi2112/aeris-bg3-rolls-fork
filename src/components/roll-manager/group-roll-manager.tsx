@@ -1,10 +1,9 @@
 import { getAdapter } from "@/adapters/get-adapter";
 import { getGroupRollEditor } from "@/apps/group-roll-editor";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { dehydrateRolls, hydrateRolls } from "@/utils/settings";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { GroupRollChat } from "../chat-message/group-roll-chat-message";
 import { GroupRollCard } from "./group-roll-card";
 
@@ -17,6 +16,22 @@ export const GroupRollManager = () => {
     const [groupRolls, setGroupRolls] = useState<GroupRoll[]>(
         hydrateRolls(persisted)
     );
+
+    // Aeris Core mounts us in wrapper elements with no height, so a scrolling list has
+    // nothing to size against. Stretch those wrappers to fill the window content.
+    const rootRef = useRef<HTMLDivElement>(null);
+    useLayoutEffect(() => {
+        let el = rootRef.current?.parentElement ?? null;
+        while (el && !el.classList.contains("window-content")) {
+            el.style.height = "100%";
+            el.style.minHeight = "0";
+            el = el.parentElement;
+        }
+        if (el) {
+            el.style.overflow = "hidden";
+            el.style.padding = "0";
+        }
+    }, []);
 
     const updateRolls = (updater: (prev: GroupRoll[]) => GroupRoll[]) => {
         setGroupRolls((prev) => {
@@ -280,19 +295,11 @@ export const GroupRollManager = () => {
 
     // Tailwind styles only apply inside .tw. Aeris Core used to add it to the window,
     // but on V14 it doesn't, which left the fields unstyled and invisible.
+    // The list scrolls inside the window; the + button sits in a footer below it.
     return (
-        <div className="tw">
-            <div className="w-full bg-background">
-                <div className="p-2 flex flex-col">
-                    <Button
-                        onClick={handleCreateRoll}
-                        size="icon"
-                        variant="outline"
-                        className="absolute left-4 bottom-4 pointer-events-auto z-10"
-                    >
-                        <Plus />
-                    </Button>
-                    <ScrollArea className="h-full min-h-0">
+        <div className="tw" ref={rootRef} style={{ height: "100%" }}>
+            <div className="w-full h-full bg-background flex flex-col">
+                <div className="flex-1 min-h-0 overflow-y-auto p-2">
                         <div className="p-2 space-y-2">
                             {groupRolls.length === 0 ? (
                                 <p className="text-xs text-muted-foreground text-center py-8">
@@ -364,7 +371,16 @@ export const GroupRollManager = () => {
                                 })
                             )}
                         </div>
-                    </ScrollArea>
+                </div>
+                <div className="shrink-0 p-2 pt-0 flex">
+                    <Button
+                        onClick={handleCreateRoll}
+                        size="icon"
+                        variant="outline"
+                        className="pointer-events-auto"
+                    >
+                        <Plus />
+                    </Button>
                 </div>
             </div>
         </div>

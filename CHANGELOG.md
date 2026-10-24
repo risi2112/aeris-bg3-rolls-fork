@@ -1,3 +1,14 @@
+## v14.0.3
+
+### Fixed
+
+-   Group Roll Manager list scrolls inside the window; the + button sits below the list
+-   Portraits show a pointer cursor and a "Click to roll" tooltip while they're waiting to be rolled
+
+### Changed
+
+-   If the 3D dice can't be created, the GM gets an on-screen warning with the reason
+
 ## v14.0.2
 
 ### Added

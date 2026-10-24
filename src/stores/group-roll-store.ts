@@ -80,6 +80,7 @@ export const useRollStore = create<RollState>((set) => ({
 }));
 
 const EMPTY_ARRAY: string[] = [];
+let diceWarningShown = false;
 
 function getDieOffsets(n: number): number[] {
     if (n === 1) return [0];
@@ -166,6 +167,16 @@ export function setupGroupRollHooks() {
                             "aeris-bg3-rolls | Could not create the 3D die, showing the overlay without it",
                             err
                         );
+                        // Tell the GM once per session, so the reason is visible without the console
+                        if (game.user?.isGM && !diceWarningShown) {
+                            diceWarningShown = true;
+                            ui.notifications?.warn(
+                                `Aeris BG3 Rolls: 3D dice unavailable - ${
+                                    (err as Error)?.message ?? err
+                                }`,
+                                { permanent: true }
+                            );
+                        }
                         continue;
                     }
 

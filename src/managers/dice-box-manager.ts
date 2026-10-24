@@ -17,6 +17,7 @@ class DiceBoxManager {
     private container: HTMLElement | null = null;
     private initPromise: Promise<void> | null = null;
     private waitingForDsn = false;
+    private lastError: string | null = null;
 
     async init(canvasContainer: HTMLElement) {
         this.container = canvasContainer;
@@ -49,6 +50,7 @@ class DiceBoxManager {
         } catch (err) {
             this.box = null;
             this.factory = null;
+            this.lastError = (err as Error)?.message ?? String(err);
             console.error(
                 "aeris-bg3-rolls | Could not set up the Dice So Nice dice box",
                 err
@@ -102,7 +104,17 @@ class DiceBoxManager {
         pos: { x: number; y: number }
     ) {
         if (!this.box && this.container) await this.init(this.container);
-        if (!this.box) throw new Error("Box not initialized");
+        if (!this.box) {
+            const dice3d = getDice3d() as any;
+            throw new Error(
+                this.lastError
+                    ? `dice box setup failed: ${this.lastError}`
+                    : `dice box not ready (game.dice3d ${dice3d ? "found" : "missing"}, ` +
+                          `box ${dice3d?.box ? "found" : "missing"}, ` +
+                          `dicefactory ${dice3d?.box?.dicefactory ? "found" : "missing"}, ` +
+                          `canvas ${this.container ? "mounted" : "not mounted"})`
+            );
+        }
         if (!this.factory) throw new Error("Factory not initialized");
         if (this.meshes.has(id) || this.pending.has(id)) return;
 
