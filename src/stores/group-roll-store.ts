@@ -151,12 +151,23 @@ export function setupGroupRollHooks() {
                         y: baseY + top * 2,
                     };
 
-                    const mesh = await diceBoxManager.spawnDie(
-                        genId,
-                        "d20",
-                        user,
-                        screenPos
-                    );
+                    // If Dice So Nice's internals can't give us a die, still show the overlay
+                    // (just without the 3D die) instead of silently showing nothing.
+                    let mesh: Awaited<ReturnType<typeof diceBoxManager.spawnDie>>;
+                    try {
+                        mesh = await diceBoxManager.spawnDie(
+                            genId,
+                            "d20",
+                            user,
+                            screenPos
+                        );
+                    } catch (err) {
+                        console.error(
+                            "aeris-bg3-rolls | Could not create the 3D die, showing the overlay without it",
+                            err
+                        );
+                        continue;
+                    }
 
                     if (mesh?.material) {
                         const mat = mesh.material as Material & {

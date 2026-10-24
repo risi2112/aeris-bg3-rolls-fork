@@ -8,16 +8,26 @@
         {
             "name": "Robin Chand",
             "discord": "robxnlifts"
+        },
+        {
+            "name": "risi2112",
+            "url": "https://github.com/risi2112"
         }
     ],
-    "esmodules": ["main.bundle.js"],
+    "esmodules": [
+        "main.bundle.js"
+    ],
+    "styles": [
+        "assets/main.css"
+    ],
     "socket": true,
     "compatibility": {
         "minimum": "13",
-        "verified": "13"
+        "verified": "14"
     },
-    "manifest": "https://aeris-fvtt.gitlab.io/aeris-bg3-rolls/v13/module.json",
-    "download": "https://gitlab.com/api/v4/projects/69135573/packages/generic/aeris-bg3-rolls/VERSION_TAG/aeris-bg3-rolls-VERSION_TAG.zip",
+    "url": "https://github.com/risi2112/aeris-bg3-rolls-fork",
+    "manifest": "https://github.com/risi2112/aeris-bg3-rolls-fork/releases/latest/download/module.json",
+    "download": "https://github.com/risi2112/aeris-bg3-rolls-fork/releases/download/VERSION_TAG/module.zip",
     "relationships": {
         "requires": [
             {

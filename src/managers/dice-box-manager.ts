@@ -16,6 +16,19 @@ class DiceBoxManager {
 
     async init(canvasContainer: HTMLElement) {
         if (this.box) return;
+        try {
+            await this._init(canvasContainer);
+        } catch (err) {
+            this.box = null;
+            this.factory = null;
+            console.error(
+                "aeris-bg3-rolls | Could not set up the Dice So Nice dice box",
+                err
+            );
+        }
+    }
+
+    private async _init(canvasContainer: HTMLElement) {
 
         const DiceBoxCtor = getDice3d().box.constructor;
         const DiceFactoryCtor = getDice3d().box.dicefactory.constructor;

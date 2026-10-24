@@ -41,16 +41,9 @@ Hooks.once("ready", () => {
     aerisCore.docs.registerDocsMenu("aeris-bg3-rolls");
 });
 
-Hooks.once("aeris-core.import-css", () => {
-    const isDev = import.meta.env.DEV;
-
-    if (!isDev) {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "modules/aeris-bg3-rolls/assets/main.css";
-        document.head.appendChild(link);
-    }
-});
+// The stylesheet is now listed in module.json ("styles"), so Foundry loads it directly.
+// Previously it was only added when Aeris Core fired "aeris-core.import-css", which meant the
+// overlay rendered unstyled (and effectively invisible) whenever that hook didn't fire.
 
 Hooks.once("ready", () => {
     setupGroupRollHooks();
