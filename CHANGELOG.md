@@ -1,3 +1,10 @@
+## v14.0.5
+
+### Fixed
+
+-   3D dice: when Dice So Nice exposes no appearance helper at all, use the player's saved Dice So
+    Nice appearance (or a plain die in the player's colour) instead of giving up
+
 ## v14.0.4
 
 ### Fixed

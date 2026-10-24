@@ -257,29 +257,73 @@ function getUserAppearance(user: User, factory: DiceFactory): any {
         }
     }
 
-    // Last resort: the user's saved Dice So Nice appearance on top of the defaults
-    let defaults: any = { global: {} };
+    // The user's saved Dice So Nice appearance (user flag, or any Dice So Nice setting whose
+    // key mentions "appearance"), on top of Dice So Nice's defaults or our own.
+    let defaults: any = null;
     try {
-        defaults = ctor?.DEFAULT_APPEARANCE?.(user) ?? defaults;
+        defaults = ctor?.DEFAULT_APPEARANCE?.(user) ?? null;
     } catch {
-        // keep the empty default
+        defaults = null;
     }
-    const flag = (user as any)?.getFlag?.("dice-so-nice", "appearance");
-    if (flag || ctor?.DEFAULT_APPEARANCE) {
-        return foundry.utils.mergeObject(defaults, flag ?? {}, { inplace: false });
+    defaults ??= fallbackAppearance(user);
+
+    let saved: any = null;
+    try {
+        saved = (user as any)?.getFlag?.("dice-so-nice", "appearance") ?? null;
+    } catch {
+        saved = null;
+    }
+    if (!saved) {
+        try {
+            for (const key of game.settings.settings.keys()) {
+                if (!key.startsWith("dice-so-nice.") || !/appearance/i.test(key)) continue;
+                const value = game.settings.get(
+                    "dice-so-nice" as any,
+                    key.slice("dice-so-nice.".length) as any
+                ) as any;
+                if (value && typeof value === "object") {
+                    saved = value[user.id] ?? value;
+                    break;
+                }
+            }
+        } catch {
+            saved = null;
+        }
     }
 
-    // Nothing worked: say what this Dice So Nice version does offer, so it can be wired up
-    const offered = (obj: any) =>
-        obj
-            ? Object.getOwnPropertyNames(obj)
-                  .filter((n) => /appear|custom|config|setting/i.test(n))
-                  .join(", ") || "none"
-            : "n/a";
-    throw new Error(
-        `can't read the Dice So Nice appearance. Dice3D offers: ${offered(ctor)}; ` +
-            `dice3d offers: ${offered(dice3d ? Object.getPrototypeOf(dice3d) : null)}`
-    );
+    if (!appearanceDiagnosticsLogged) {
+        appearanceDiagnosticsLogged = true;
+        console.info("aeris-bg3-rolls | Dice So Nice appearance fallback", {
+            dice3dStatics: ctor ? Object.getOwnPropertyNames(ctor) : null,
+            dsnSettings: Array.from(game.settings.settings.keys()).filter((k) =>
+                k.startsWith("dice-so-nice.")
+            ),
+            dsnUserFlags: Object.keys((user as any)?.flags?.["dice-so-nice"] ?? {}),
+            usedSavedAppearance: !!saved,
+        });
+    }
+
+    return foundry.utils.mergeObject(defaults, saved ?? {}, { inplace: false });
+}
+
+let appearanceDiagnosticsLogged = false;
+
+/** A plain Dice So Nice appearance in the player's colour, used when nothing else is available. */
+function fallbackAppearance(user: User): any {
+    const color = (user as any)?.color?.css ?? String((user as any)?.color ?? "#2b2b2b");
+    return {
+        global: {
+            labelColor: "#ffffff",
+            diceColor: color,
+            outlineColor: "#000000",
+            edgeColor: color,
+            texture: "none",
+            material: "auto",
+            font: "auto",
+            colorset: "custom",
+            system: "standard",
+        },
+    };
 }
 
 export function getAppearance(
