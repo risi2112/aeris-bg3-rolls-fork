@@ -112,10 +112,13 @@ export const GroupRollManager = () => {
         updateRolls((prev) => prev.filter((roll) => roll.id !== rollId));
     };
 
-    const handleInitiateRoll = async (rollId: string) => {
-        const groupRoll = groupRolls.find(
-            (r) => r.id === rollId
-        ) as PendingGroupRoll;
+    const handleInitiateRoll = async (
+        rollId: string,
+        override?: PendingGroupRoll
+    ) => {
+        const groupRoll =
+            override ??
+            (groupRolls.find((r) => r.id === rollId) as PendingGroupRoll);
         if (!groupRoll) return;
 
         if (!groupRoll.rolls.length) {
@@ -127,7 +130,8 @@ export const GroupRollManager = () => {
             return;
         }
         if (groupRoll.status !== "pending") {
-            ui.notifications.warn("Cannot initiated this group roll.");
+            ui.notifications.warn("Cannot initiate this group roll.");
+            return;
         }
         const executedRolls = await Promise.all(
             groupRoll.rolls.map(async (req) => {
@@ -201,9 +205,25 @@ export const GroupRollManager = () => {
             })
         );
 
-        setTimeout(() => {
-            updateRolls((prev) => prev.filter((r) => r.id !== rollId));
-        }, 2000);
+        // Completed rolls stay in the list so they can be rolled again.
+    };
+
+    /** Reset a finished (or stuck) roll to pending with the same settings and roll it again. */
+    const handleRollAgain = (roll: GroupRoll) => {
+        const pending: PendingGroupRoll = {
+            id: roll.id,
+            status: "pending",
+            promptHeader: roll.promptHeader,
+            promptSubheader: roll.promptSubheader,
+            targetValue: roll.targetValue,
+            img: roll.img,
+            rollConfig: roll.rollConfig,
+            rolls: roll.rolls
+                .filter((r) => !!r.actor)
+                .map((r) => ({ actor: r.actor })),
+        };
+        updateRolls((prev) => prev.map((r) => (r.id === roll.id ? pending : r)));
+        void handleInitiateRoll(roll.id, pending);
     };
 
     const handleSelectTokens = (rollId: string) => {
@@ -294,6 +314,9 @@ export const GroupRollManager = () => {
                                             }
                                             handleInitiateRoll={() =>
                                                 handleInitiateRoll(groupRoll.id)
+                                            }
+                                            handleRollAgain={() =>
+                                                handleRollAgain(groupRoll)
                                             }
                                             handleSelectTokens={() => {
                                                 handleSelectTokens(groupRoll.id);

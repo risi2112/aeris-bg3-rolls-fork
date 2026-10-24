@@ -1,7 +1,9 @@
 @import "tailwindcss/theme.css" layer(theme);
 
+/* Not in a cascade layer: Foundry V14's own (unlayered) button and input styles would
+   otherwise always win over layered Tailwind utilities, whatever their specificity. */
 .tw {
-    @import "tailwindcss/utilities.css" layer(utilities);
+    @import "tailwindcss/utilities.css";
 }
 
 @source "../node_modules/@radix-ui";

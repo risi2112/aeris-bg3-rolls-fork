@@ -14,8 +14,36 @@ class DiceBoxManager {
         return DiceBoxManager._instance;
     }
 
+    private container: HTMLElement | null = null;
+    private initPromise: Promise<void> | null = null;
+    private waitingForDsn = false;
+
     async init(canvasContainer: HTMLElement) {
+        this.container = canvasContainer;
         if (this.box) return;
+        if (this.initPromise) return this.initPromise;
+
+        // Our "ready" hook can run before Dice So Nice has built game.dice3d (modules load
+        // alphabetically, and "aeris" comes before "dice-so-nice"). If it isn't there yet,
+        // try again once Dice So Nice says it's ready, or when a die is first needed.
+        if (!getDice3d()?.box?.dicefactory) {
+            if (!this.waitingForDsn) {
+                this.waitingForDsn = true;
+                Hooks.once("diceSoNiceReady" as any, () => {
+                    this.waitingForDsn = false;
+                    if (this.container) void this.init(this.container);
+                });
+            }
+            return;
+        }
+
+        this.initPromise = this.tryInit(canvasContainer).finally(() => {
+            this.initPromise = null;
+        });
+        return this.initPromise;
+    }
+
+    private async tryInit(canvasContainer: HTMLElement) {
         try {
             await this._init(canvasContainer);
         } catch (err) {
@@ -73,6 +101,7 @@ class DiceBoxManager {
         user: User,
         pos: { x: number; y: number }
     ) {
+        if (!this.box && this.container) await this.init(this.container);
         if (!this.box) throw new Error("Box not initialized");
         if (!this.factory) throw new Error("Factory not initialized");
         if (this.meshes.has(id) || this.pending.has(id)) return;

@@ -1,4 +1,5 @@
 import { MODULE_ID } from "@/config/constants";
+import { isAutoRollOn } from "@/settings/auto-roll";
 import { broadcast } from "../socket/serialised";
 import { sleep } from "../utils/general";
 import { debug } from "../utils/logging";
@@ -153,7 +154,7 @@ class GroupRollListener {
 
             if (wasCancelled) return [];
 
-            await sleep(2000);
+            await sleep(1000);
         } finally {
             this.hideOverlay();
             cancel?.cleanup();
@@ -173,6 +174,19 @@ class GroupRollListener {
         }
 
         state.ready = true;
+
+        // Optionally roll everyone without waiting for clicks. The overlay takes a couple of
+        // seconds to appear on every client, so start after that and stagger the dice a little.
+        if (isAutoRollOn()) {
+            request.rolls.forEach(({ actor }, index) => {
+                setTimeout(() => {
+                    Hooks.call("triggerRollForActor", {
+                        groupRollId: request.id,
+                        actorUuid: actor.uuid as ActorUuid,
+                    });
+                }, 3000 + index * 500);
+            });
+        }
 
         while (state.pending.size > 0) {
             if (cancel) {
@@ -244,7 +258,8 @@ class GroupRollListener {
                     maxIndex,
                 });
 
-                await sleep(5000);
+                // Long enough for the die to spin (2.5s) and reveal the modified total
+                await sleep(4500);
                 state.pending.get(actorUuid)?.resolve();
                 state.pending.delete(actorUuid);
             }

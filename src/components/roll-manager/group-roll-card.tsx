@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Edit, Play, Trash2, UserPlus, X } from "lucide-react";
+import { Edit, Play, RotateCcw, Trash2, UserPlus, X } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import {
@@ -24,6 +24,7 @@ export const GroupRollCard = <Cfg,>({
     groupRoll,
     adapter,
     handleInitiateRoll,
+    handleRollAgain,
     handleEditRoll,
     handleDeleteRoll,
     handleSelectTokens,
@@ -32,6 +33,7 @@ export const GroupRollCard = <Cfg,>({
     groupRoll: GroupRoll<Cfg>;
     adapter: GroupRollAdapter<Cfg>;
     handleInitiateRoll: () => void;
+    handleRollAgain: () => void;
     handleEditRoll: () => void;
     handleDeleteRoll: () => void;
     handleSelectTokens: () => void;
@@ -164,6 +166,22 @@ export const GroupRollCard = <Cfg,>({
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Initiate roll</TooltipContent>
+                            </Tooltip>
+                        )}
+
+                        {groupRoll.status !== "pending" && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-5 w-5 p-0"
+                                        onClick={handleRollAgain}
+                                    >
+                                        <RotateCcw className="w-3 h-3" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Roll again</TooltipContent>
                             </Tooltip>
                         )}
 

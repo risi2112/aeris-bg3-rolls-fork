@@ -1,3 +1,4 @@
+import { registerAutoRollSetting } from "./auto-roll";
 import { registerBorderColorSetting } from "./border-color";
 import { registerDebugMode } from "./debug-mode";
 import { registerDefaultImageMap } from "./default-image-map";
@@ -8,4 +9,5 @@ export function registerSettings() {
     registerDefaultImageMap();
     registerGroupRollsStore();
     registerBorderColorSetting();
+    registerAutoRollSetting();
 }

@@ -192,7 +192,8 @@ export const useDiceAnimation2 = (
         }
 
         timeline.pause();
-        const timer = setTimeout(() => timeline.play(), 4000);
+        // rotateToResult spins the die for 2.5s; reveal the total right after it lands
+        const timer = setTimeout(() => timeline.play(), 2700);
 
         return () => {
             clearTimeout(timer);

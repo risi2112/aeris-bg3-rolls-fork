@@ -1,3 +1,22 @@
+## v14.0.2
+
+### Added
+
+-   **Roll again** button on finished rolls, which re-runs the same roll with the same players
+-   **Roll automatically** world setting: roll everyone's die as soon as the overlay appears
+    instead of waiting for each portrait to be clicked
+
+### Changed
+
+-   Finished rolls stay in the Group Roll Manager instead of disappearing
+-   Shorter pauses: the total is revealed as soon as the die lands, and the overlay closes sooner
+
+### Fixed
+
+-   3D dice: wait for Dice So Nice to finish loading before creating the dice box
+-   Buttons and the roll type picker in the Manager and editor are styled on V14 (Tailwind
+    utilities are no longer in a cascade layer, which Foundry's own styles always beat)
+
 ## v14.0.1
 
 ### Fixed
