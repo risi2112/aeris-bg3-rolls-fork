@@ -1,3 +1,10 @@
+## v14.0.7
+
+### Added
+
+-   `aerisBg3Rolls.diagnoseDice()`: shows a test die for a few seconds and whispers a report about
+    the Dice So Nice dice box to the GM, for troubleshooting invisible dice
+
 ## v14.0.6
 
 ### Fixed
