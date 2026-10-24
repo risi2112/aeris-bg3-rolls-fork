@@ -1,3 +1,16 @@
+## v14.0.0
+
+risi2112 fork for Foundry V14 / dnd5e 6 (work in progress).
+
+### Fixed
+
+-   Load the overlay stylesheet through module.json instead of relying on Aeris Core's CSS hook
+-   Still show the overlay if Dice So Nice's dice box can't be created
+
+### Changed
+
+-   Manifest and downloads now come from https://github.com/risi2112/aeris-bg3-rolls-fork
+
 ## v13.0.10
 
 ### Fixed
