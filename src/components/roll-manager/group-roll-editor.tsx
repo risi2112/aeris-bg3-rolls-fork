@@ -55,57 +55,61 @@ export function GroupRollEditor<Cfg>({
         [adapter, rollConfig]
     );
 
+    // Tailwind styles only apply inside .tw. Aeris Core used to add it to the window,
+    // but on V14 it doesn't, which left the fields unstyled and invisible.
     return (
-        <div className="p-4 space-y-4">
-            <h2 className="text-lg font-bold">
-                {groupRoll ? "Edit Group Roll" : "Create Group Roll"}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-                Configure the group roll settings.
-            </p>
+        <div className="tw">
+            <div className="p-4 space-y-4">
+                <h2 className="text-lg font-bold">
+                    {groupRoll ? "Edit Group Roll" : "Create Group Roll"}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                    Configure the group roll settings.
+                </p>
 
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="header">Title *</Label>
-                    <Input
-                        id="header"
-                        placeholder="e.g. Jump The Bridge"
-                        value={header}
-                        onChange={(e) => setHeader(e.target.value)}
-                    />
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="header">Title *</Label>
+                        <Input
+                            id="header"
+                            placeholder="e.g. Jump The Bridge"
+                            value={header}
+                            onChange={(e) => setHeader(e.target.value)}
+                        />
+                    </div>
+
+                    {rollTypeSelector}
+
+                    <div className="space-y-2">
+                        <Label htmlFor="dc">DC *</Label>
+                        <Input
+                            id="dc"
+                            placeholder="10"
+                            value={dc}
+                            type="number"
+                            onChange={(e) => setDC(Number(e.target.value) || 0)}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="backgroundImage">Background Image</Label>
+                        <FilePickerInput
+                            name="backgroundImage"
+                            value={image}
+                            onChange={(e) => setImage(e)}
+                            className="gap-4"
+                        />
+                    </div>
                 </div>
 
-                {rollTypeSelector}
-
-                <div className="space-y-2">
-                    <Label htmlFor="dc">DC *</Label>
-                    <Input
-                        id="dc"
-                        placeholder="10"
-                        value={dc}
-                        type="number"
-                        onChange={(e) => setDC(Number(e.target.value) || 0)}
-                    />
+                <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={handleCancel}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSave} disabled={!isValid}>
+                        {groupRoll ? "Update Roll" : "Create Roll"}
+                    </Button>
                 </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="backgroundImage">Background Image</Label>
-                    <FilePickerInput
-                        name="backgroundImage"
-                        value={image}
-                        onChange={(e) => setImage(e)}
-                        className="gap-4"
-                    />
-                </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={handleCancel}>
-                    Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={!isValid}>
-                    {groupRoll ? "Update Roll" : "Create Roll"}
-                </Button>
             </div>
         </div>
     );

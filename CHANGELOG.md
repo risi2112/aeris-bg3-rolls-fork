@@ -1,3 +1,10 @@
+## v14.0.1
+
+### Fixed
+
+-   Group Roll Manager and editor windows are styled again (text fields, roll type picker). They
+    relied on Aeris Core adding the Tailwind `.tw` scope to the window, which no longer happens on V14.
+
 ## v14.0.0
 
 risi2112 fork for Foundry V14 / dnd5e 6 (work in progress).

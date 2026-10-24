@@ -258,87 +258,91 @@ export const GroupRollManager = () => {
         window.addEventListener("keydown", onConfirm);
     };
 
+    // Tailwind styles only apply inside .tw. Aeris Core used to add it to the window,
+    // but on V14 it doesn't, which left the fields unstyled and invisible.
     return (
-        <div className="w-full bg-background">
-            <div className="p-2 flex flex-col">
-                <Button
-                    onClick={handleCreateRoll}
-                    size="icon"
-                    variant="outline"
-                    className="absolute left-4 bottom-4 pointer-events-auto z-10"
-                >
-                    <Plus />
-                </Button>
-                <ScrollArea className="h-full min-h-0">
-                    <div className="p-2 space-y-2">
-                        {groupRolls.length === 0 ? (
-                            <p className="text-xs text-muted-foreground text-center py-8">
-                                No group rolls yet
-                            </p>
-                        ) : (
-                            groupRolls.map((groupRoll) => {
-                                return (
-                                    <GroupRollCard
-                                        adapter={getAdapter()}
-                                        key={groupRoll.id}
-                                        groupRoll={groupRoll}
-                                        handleEditRoll={() => {
-                                            if (groupRoll.status === "pending")
-                                                handleEditRoll(groupRoll);
-                                        }}
-                                        handleDeleteRoll={() =>
-                                            handleDeleteRoll(groupRoll.id)
-                                        }
-                                        handleInitiateRoll={() =>
-                                            handleInitiateRoll(groupRoll.id)
-                                        }
-                                        handleSelectTokens={() => {
-                                            handleSelectTokens(groupRoll.id);
-                                        }}
-                                        handleRemoveParticipant={(actor) =>
-                                            updateRolls((prev) =>
-                                                prev.map((r) => {
-                                                    if (r.id !== groupRoll.id)
-                                                        return r;
+        <div className="tw">
+            <div className="w-full bg-background">
+                <div className="p-2 flex flex-col">
+                    <Button
+                        onClick={handleCreateRoll}
+                        size="icon"
+                        variant="outline"
+                        className="absolute left-4 bottom-4 pointer-events-auto z-10"
+                    >
+                        <Plus />
+                    </Button>
+                    <ScrollArea className="h-full min-h-0">
+                        <div className="p-2 space-y-2">
+                            {groupRolls.length === 0 ? (
+                                <p className="text-xs text-muted-foreground text-center py-8">
+                                    No group rolls yet
+                                </p>
+                            ) : (
+                                groupRolls.map((groupRoll) => {
+                                    return (
+                                        <GroupRollCard
+                                            adapter={getAdapter()}
+                                            key={groupRoll.id}
+                                            groupRoll={groupRoll}
+                                            handleEditRoll={() => {
+                                                if (groupRoll.status === "pending")
+                                                    handleEditRoll(groupRoll);
+                                            }}
+                                            handleDeleteRoll={() =>
+                                                handleDeleteRoll(groupRoll.id)
+                                            }
+                                            handleInitiateRoll={() =>
+                                                handleInitiateRoll(groupRoll.id)
+                                            }
+                                            handleSelectTokens={() => {
+                                                handleSelectTokens(groupRoll.id);
+                                            }}
+                                            handleRemoveParticipant={(actor) =>
+                                                updateRolls((prev) =>
+                                                    prev.map((r) => {
+                                                        if (r.id !== groupRoll.id)
+                                                            return r;
 
-                                                    switch (r.status) {
-                                                        case "pending":
-                                                            return {
-                                                                ...r,
-                                                                rolls: r.rolls.filter(
-                                                                    (rr) =>
-                                                                        rr.actor !==
-                                                                        actor
-                                                                ),
-                                                            } satisfies PendingGroupRoll;
-                                                        case "initiated":
-                                                            return {
-                                                                ...r,
-                                                                rolls: r.rolls.filter(
-                                                                    (rr) =>
-                                                                        rr.actor !==
-                                                                        actor
-                                                                ),
-                                                            } satisfies InitiatedGroupRoll;
-                                                        case "completed":
-                                                            return {
-                                                                ...r,
-                                                                rolls: r.rolls.filter(
-                                                                    (rr) =>
-                                                                        rr.actor !==
-                                                                        actor
-                                                                ),
-                                                            } satisfies CompletedGroupRoll;
-                                                    }
-                                                })
-                                            )
-                                        }
-                                    />
-                                );
-                            })
-                        )}
-                    </div>
-                </ScrollArea>
+                                                        switch (r.status) {
+                                                            case "pending":
+                                                                return {
+                                                                    ...r,
+                                                                    rolls: r.rolls.filter(
+                                                                        (rr) =>
+                                                                            rr.actor !==
+                                                                            actor
+                                                                    ),
+                                                                } satisfies PendingGroupRoll;
+                                                            case "initiated":
+                                                                return {
+                                                                    ...r,
+                                                                    rolls: r.rolls.filter(
+                                                                        (rr) =>
+                                                                            rr.actor !==
+                                                                            actor
+                                                                    ),
+                                                                } satisfies InitiatedGroupRoll;
+                                                            case "completed":
+                                                                return {
+                                                                    ...r,
+                                                                    rolls: r.rolls.filter(
+                                                                        (rr) =>
+                                                                            rr.actor !==
+                                                                            actor
+                                                                    ),
+                                                                } satisfies CompletedGroupRoll;
+                                                        }
+                                                    })
+                                                )
+                                            }
+                                        />
+                                    );
+                                })
+                            )}
+                        </div>
+                    </ScrollArea>
+                </div>
             </div>
         </div>
     );
