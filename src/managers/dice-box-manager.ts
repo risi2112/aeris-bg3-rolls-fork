@@ -81,12 +81,12 @@ class DiceBoxManager {
         // attach resize observer
         const resize = () => {
             if (!this.box) return;
-            this.box.setScene({
+            (this.box as any).setScene?.({
                 width: canvasContainer.clientWidth,
                 height: canvasContainer.clientHeight,
             });
 
-            this.box.renderScene();
+            this.render();
         };
 
         window.addEventListener("resize", resize);
@@ -140,12 +140,14 @@ class DiceBoxManager {
             dicemesh.position.set(pos.x, pos.y, 0);
 
             this.box!.scene.add(dicemesh);
-            this.box!.diceList.push(dicemesh);
+            // Newer Dice So Nice boxes no longer keep a diceList array
+            const diceList = (this.box as any).diceList;
+            if (Array.isArray(diceList)) diceList.push(dicemesh);
 
             this.meshes.set(id, dicemesh);
             this.pending.delete(id);
 
-            this.box!.renderScene();
+            this.render();
             return dicemesh;
         })();
 
@@ -157,7 +159,7 @@ class DiceBoxManager {
         const mesh = this.meshes.get(id);
         if (mesh) {
             mesh.position.set(pos.x, pos.y, 0);
-            this.box?.renderScene();
+            this.render();
         }
     }
 
@@ -182,10 +184,41 @@ class DiceBoxManager {
     private _actuallyRemoveDie(id: string, mesh: DSNMesh) {
         if (!this.box) return;
         this.box.scene.remove(mesh);
-        this.box.diceList = this.box.diceList.filter((m) => m !== mesh);
+        const diceList = (this.box as any).diceList;
+        if (Array.isArray(diceList)) {
+            (this.box as any).diceList = diceList.filter((m: DSNMesh) => m !== mesh);
+        }
         this.meshes.delete(id);
-        this.box.renderScene();
+        this.render();
     }
+
+    /** Draw the dice scene, whichever way this Dice So Nice version supports. */
+    private render() {
+        const box = this.box as any;
+        if (!box) return;
+        if (typeof box.renderScene === "function") {
+            box.renderScene();
+        } else if (box.renderer?.render && box.scene && box.camera) {
+            box.renderer.render(box.scene, box.camera);
+        } else if (!this.renderWarningShown) {
+            this.renderWarningShown = true;
+            const keys = new Set<string>();
+            for (let o = box; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) {
+                Object.getOwnPropertyNames(o)
+                    .filter((n) => /render|camera|scene|draw|animate/i.test(n))
+                    .forEach((n) => keys.add(n));
+            }
+            const msg = `can't draw the dice scene. Dice box offers: ${[...keys].join(", ") || "none"}`;
+            console.error(`aeris-bg3-rolls | ${msg}`);
+            if (game.user?.isGM) {
+                ui.notifications?.warn(`Aeris BG3 Rolls: 3D dice unavailable - ${msg}`, {
+                    permanent: true,
+                });
+            }
+        }
+    }
+
+    private renderWarningShown = false;
 
     getDie(id: string): DSNMesh | undefined {
         return this.meshes.get(id);
@@ -208,7 +241,7 @@ class DiceBoxManager {
 
         const loop = () => {
             if (!this.box) return;
-            this.box.renderScene();
+            this.render();
 
             if (this.activeAnimations.size > 0) {
                 this.rafId = requestAnimationFrame(loop);
@@ -225,7 +258,7 @@ class DiceBoxManager {
         if (this.activeAnimations.size === 0 && this.rafId) {
             cancelAnimationFrame(this.rafId);
             this.rafId = null;
-            this.box?.renderScene(); // final render snap
+            this.render(); // final render snap
         }
     }
 }

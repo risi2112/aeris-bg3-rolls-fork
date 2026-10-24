@@ -1,3 +1,10 @@
+## v14.0.6
+
+### Fixed
+
+-   3D dice: newer Dice So Nice dice boxes have no `diceList` (and may lack `renderScene` /
+    `setScene`), which stopped every die right after it was created
+
 ## v14.0.5
 
 ### Fixed
