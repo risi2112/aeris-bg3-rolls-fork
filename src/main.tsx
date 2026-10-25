@@ -7,6 +7,10 @@ import "./index.css";
 import { registerSettings } from "./settings/_register-settings";
 import { setupSocket } from "./socket/_socket";
 import { setupGroupRollHooks } from "./stores/group-roll-store";
+import { setupSidebarButton } from "./sidebar-button";
+
+// GM button in the right sidebar to open the Group Roll Manager
+setupSidebarButton();
 
 Hooks.once("setup", () => {
     setupSocket();

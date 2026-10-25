@@ -1,3 +1,11 @@
+## v14.1.0
+
+### Added
+
+-   A d20 button in the right sidebar's tab strip (GM only) opens the Group Roll Manager, so a macro
+    is no longer needed. If the sidebar layout isn't recognised, the button goes in the Token
+    controls on the left instead.
+
 ## v14.0.14
 
 ### Changed
