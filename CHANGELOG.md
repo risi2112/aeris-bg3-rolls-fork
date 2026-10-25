@@ -1,3 +1,11 @@
+## v14.0.13
+
+### Changed
+
+-   The modifier is split into the character's own modifier and other bonuses (auras, effects,
+    bonus dice like Bless). Other bonuses are shown in amber, on the portraits and in the chat card,
+    with the effect's name when the roll provides one.
+
 ## v14.0.12
 
 ### Fixed

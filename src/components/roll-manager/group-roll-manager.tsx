@@ -1,21 +1,12 @@
 import { getAdapter } from "@/adapters/get-adapter";
 import { getGroupRollEditor } from "@/apps/group-roll-editor";
 import { Button } from "@/components/ui/button";
+import { getRollBreakdown } from "@/utils/roll-breakdown";
 import { dehydrateRolls, hydrateRolls } from "@/utils/settings";
 import { Plus } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { GroupRollChat } from "../chat-message/group-roll-chat-message";
 import { GroupRollCard } from "./group-roll-card";
-
-/** Sum of the kept results of the roll's first d20 (or first die if there is no d20). */
-function keptD20(roll: Roll): number {
-    const die =
-        roll.dice.find((d) => d.faces === 20) ?? roll.dice[0];
-    if (!die) return 0;
-    return die.results
-        .filter((res) => res.active !== false && !res.discarded)
-        .reduce((sum, res) => sum + (res.result ?? 0), 0);
-}
 
 export const GroupRollManager = () => {
     const persisted = game.settings.get(
@@ -207,10 +198,16 @@ export const GroupRollManager = () => {
                         }))
                     ),
                     formula: r.roll.formula,
-                    // Everything that isn't the kept d20: proficiency, ability, and bonuses
-                    // that aren't plain numbers (e.g. auras or effects added as formulas),
-                    // which summing only the numeric terms used to miss.
-                    modifier: (r.roll.total ?? 0) - keptD20(r.roll),
+                    // Total minus the kept d20, split into the character's own modifier and
+                    // other bonuses (auras, effects, bonus dice), shown separately on the card.
+                    ...(() => {
+                        const b = getRollBreakdown(r.roll);
+                        return {
+                            modifier: b.modifier,
+                            baseModifier: b.base,
+                            bonuses: b.bonuses,
+                        };
+                    })(),
                 })),
                 targetValue: groupRoll.targetValue,
                 promptHeader: groupRoll.promptHeader,

@@ -15,6 +15,10 @@ interface GroupRollChatProps {
         dice: { value: number; kept: boolean }[];
         formula: string;
         modifier: number;
+        /** The character's own modifier (newer messages only) */
+        baseModifier?: number;
+        /** Other bonuses such as auras or bonus dice (newer messages only) */
+        bonuses?: { value: number; label: string }[];
     }[];
     targetValue?: number;
     promptHeader?: string;
@@ -131,15 +135,9 @@ export const GroupRollChat: React.FC<GroupRollChatProps> = ({
                                                                         </div>
                                                                     )
                                                                 )}
-                                                                {r.modifier !==
-                                                                    0 && (
-                                                                    <span className="text-muted-foreground">
-                                                                        +{" "}
-                                                                        {
-                                                                            r.modifier
-                                                                        }
-                                                                    </span>
-                                                                )}
+                                                                <ModifierBreakdown
+                                                                    roll={r}
+                                                                />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -153,5 +151,42 @@ export const GroupRollChat: React.FC<GroupRollChatProps> = ({
                     })}
             </div>
         </div>
+    );
+};
+
+const fmt = (n: number) => (n < 0 ? `- ${Math.abs(n)}` : `+ ${n}`);
+
+/** "+ 6  + 4 (aura)": the character's modifier, then each other bonus in a different colour. */
+const ModifierBreakdown: React.FC<{
+    roll: GroupRollChatProps["rolls"][number];
+}> = ({ roll }) => {
+    // Messages created before the breakdown existed only have the combined modifier
+    if (roll.baseModifier === undefined) {
+        return roll.modifier !== 0 ? (
+            <span className="text-muted-foreground">{fmt(roll.modifier)}</span>
+        ) : null;
+    }
+    return (
+        <>
+            {roll.baseModifier !== 0 && (
+                <span className="text-muted-foreground" title="Character modifier">
+                    {fmt(roll.baseModifier)}
+                </span>
+            )}
+            {(roll.bonuses ?? []).map((bonus, i) => (
+                <span
+                    key={i}
+                    className="text-amber-400"
+                    title={bonus.label}
+                >
+                    {fmt(bonus.value)}
+                    {bonus.label && bonus.label !== "bonus" && (
+                        <span className="ml-0.5 text-[10px] font-normal opacity-80">
+                            ({bonus.label})
+                        </span>
+                    )}
+                </span>
+            ))}
+        </>
     );
 };

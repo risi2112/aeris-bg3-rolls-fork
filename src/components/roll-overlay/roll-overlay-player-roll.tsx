@@ -6,6 +6,7 @@ import { diceBoxManager } from "@/managers/dice-box-manager";
 import { useRollStore } from "@/stores/group-roll-store";
 import { getDiceOffsetCoordinates } from "@/utils/dice-offset-coordinates";
 import { getModifierFromRoll } from "@/utils/get-modifier-from-roll";
+import { getRollBreakdown, signed } from "@/utils/roll-breakdown";
 import gsap from "gsap";
 import React, {
     useCallback,
@@ -63,6 +64,15 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
     const numberOfDie = 1 + Math.abs(Number(advantageMode));
 
     const modifierRef = useRef<HTMLDivElement>(null);
+
+    // Character modifier and other bonuses (auras, effects, bonus dice), shown separately
+    const breakdown = useMemo(() => {
+        try {
+            return getRollBreakdown(rollData.roll);
+        } catch {
+            return null;
+        }
+    }, [rollData]);
 
     // Shown when Dice So Nice can't relabel the die face with the total (Dice So Nice 6+)
     const [fallbackTotal, setFallbackTotal] = useState<string | null>(null);
@@ -181,10 +191,27 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                         <div
                             ref={modifierRef}
                             className={cn(
-                                "absolute top-[80px] left-[86px] -translate-x-1/2 rounded-sm font-black text-base z-20 px-0.5"
+                                "absolute top-[80px] left-[86px] -translate-x-1/2 rounded-sm font-black text-base z-20 px-0.5 whitespace-nowrap"
                             )}
                         >
-                            {modifier > 0 ? `+${modifier}` : modifier}
+                            {breakdown ? (
+                                <>
+                                    {breakdown.base !== 0 && signed(breakdown.base)}
+                                    {breakdown.bonuses.map((b, i) => (
+                                        <span
+                                            key={i}
+                                            className="ml-0.5 text-amber-400"
+                                            title={b.label}
+                                        >
+                                            {signed(b.value)}
+                                        </span>
+                                    ))}
+                                </>
+                            ) : modifier > 0 ? (
+                                `+${modifier}`
+                            ) : (
+                                modifier
+                            )}
                         </div>
                     )}
                     {fallbackTotal && (
