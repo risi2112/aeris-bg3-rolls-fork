@@ -1,3 +1,11 @@
+## v14.0.8
+
+### Fixed
+
+-   3D dice on Dice So Nice 6: it switched to a metric scene with a top-down camera, so dice placed
+    in screen pixels ended up far outside the view. Dice now sit in a group that maps the module's
+    pixel layout onto the plane under Dice So Nice's camera, and are sized in screen pixels.
+
 ## v14.0.7
 
 ### Added

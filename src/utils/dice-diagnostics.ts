@@ -128,6 +128,10 @@ export async function diagnoseDice(): Promise<string> {
                 (m: any) => ({ type: m?.type, opacity: round(m?.opacity), visible: m?.visible })
             ),
             geometry: mesh.geometry?.type,
+            radius: round(mesh.geometry?.boundingSphere?.radius),
+            parent: mesh.parent?.name || mesh.parent?.type,
+            worldPos: safe(() => vec(mesh.getWorldPosition?.(new mesh.position.constructor()))),
+            parentScale: round(mesh.parent?.scale?.x),
         })));
     }
 

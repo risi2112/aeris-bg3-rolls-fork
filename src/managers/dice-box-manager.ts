@@ -1,5 +1,9 @@
 import { Dice3D, DiceBox, DiceFactory, DSNMesh } from "@/types/dsn";
 import { faceQuats, getDice3d, getFaceQuaternion } from "@/utils/dsn";
+import { Group, Matrix4, Vector3 } from "three";
+
+/** On-screen radius, in CSS pixels, of a die when we have to size it ourselves (Dice So Nice 6+). */
+const DIE_RADIUS_PX = 48;
 
 class DiceBoxManager {
     private static _instance: DiceBoxManager;
@@ -86,6 +90,7 @@ class DiceBoxManager {
                 height: canvasContainer.clientHeight,
             });
 
+            this.updateRig();
             this.render();
         };
 
@@ -139,7 +144,17 @@ class DiceBoxManager {
             dicemesh.result = 1;
             dicemesh.position.set(pos.x, pos.y, 0);
 
-            this.box!.scene.add(dicemesh);
+            const rig = this.ensureRig();
+            if (rig) {
+                // Dice So Nice 6 builds dice in its own units; size them in screen pixels
+                const geometry = (dicemesh as any).geometry;
+                geometry?.computeBoundingSphere?.();
+                const radius = geometry?.boundingSphere?.radius;
+                if (radius > 0) dicemesh.scale.setScalar(DIE_RADIUS_PX / radius);
+                rig.add(dicemesh);
+            } else {
+                this.box!.scene.add(dicemesh);
+            }
             // Newer Dice So Nice boxes no longer keep a diceList array
             const diceList = (this.box as any).diceList;
             if (Array.isArray(diceList)) diceList.push(dicemesh);
@@ -183,13 +198,76 @@ class DiceBoxManager {
 
     private _actuallyRemoveDie(id: string, mesh: DSNMesh) {
         if (!this.box) return;
-        this.box.scene.remove(mesh);
+        (mesh as any).parent?.remove(mesh);
         const diceList = (this.box as any).diceList;
         if (Array.isArray(diceList)) {
             (this.box as any).diceList = diceList.filter((m: DSNMesh) => m !== mesh);
         }
         this.meshes.delete(id);
         this.render();
+    }
+
+    /**
+     * The module lays dice out in screen pixels, relative to the centre of the screen, with +y up
+     * and the camera looking down -z. That matched older Dice So Nice. Dice So Nice 6 works in
+     * metres with a camera looking straight down at the table, so dice placed in pixels ended up
+     * far outside the view. The "rig" is a group that converts between the two: its children keep
+     * using pixel coordinates and pixel-space rotations, and the group's transform maps them onto
+     * the plane under Dice So Nice's camera.
+     */
+    private rig: Group | null = null;
+
+    private usesMetricCamera(): boolean {
+        const camera = (this.box as any)?.camera;
+        return !!camera && typeof camera.far === "number" && camera.far < 1000;
+    }
+
+    private ensureRig(): Group | null {
+        if (!this.box || !this.usesMetricCamera()) return null;
+        if (!this.rig) {
+            this.rig = new Group();
+            this.rig.name = "aeris-bg3-rolls-rig";
+            (this.box as any).scene.add(this.rig);
+        }
+        this.updateRig();
+        return this.rig;
+    }
+
+    private updateRig() {
+        const box = this.box as any;
+        const camera = box?.camera;
+        if (!this.rig || !camera) return;
+        camera.updateMatrixWorld?.(true);
+
+        // Camera axes in world space: right, screen-up, and "towards the viewer"
+        const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+        const up = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+        const toward = new Vector3().setFromMatrixColumn(camera.matrixWorld, 2).normalize();
+        const camPos = new Vector3().setFromMatrixPosition(camera.matrixWorld);
+
+        // Put the dice plane where the camera looks at the world origin (the table), but stay
+        // within the camera's near/far range.
+        const forward = toward.clone().negate();
+        let dist = forward.dot(new Vector3().sub(camPos));
+        if (!(dist > 0)) dist = (camera.near + camera.far) / 2;
+        dist = Math.min(Math.max(dist, camera.near * 4), camera.far * 0.9);
+
+        // Metres per CSS pixel on that plane
+        const heightPx = this.container?.clientHeight || window.innerHeight;
+        const fovRad = ((camera.fov ?? 20) * Math.PI) / 180;
+        const visibleHeight = 2 * dist * Math.tan(fovRad / 2) / (camera.zoom || 1);
+        const metresPerPx = visibleHeight / heightPx;
+
+        // Lift the dice slightly towards the camera so they sit above the table surface
+        const centre = camPos
+            .clone()
+            .add(forward.multiplyScalar(dist - DIE_RADIUS_PX * 1.5 * metresPerPx));
+
+        const basis = new Matrix4().makeBasis(right, up, toward);
+        this.rig.quaternion.setFromRotationMatrix(basis);
+        this.rig.position.copy(centre);
+        this.rig.scale.setScalar(metresPerPx);
+        this.rig.updateMatrixWorld(true);
     }
 
     /** Draw the dice scene, whichever way this Dice So Nice version supports. */
