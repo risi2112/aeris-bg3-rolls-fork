@@ -1,3 +1,10 @@
+## v14.0.9
+
+### Fixed
+
+-   Dice sit where the layout intends (above each portrait) on Dice So Nice 6: the layout works in
+    half-pixel units, not pixels
+
 ## v14.0.8
 
 ### Fixed

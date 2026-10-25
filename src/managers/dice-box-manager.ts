@@ -2,8 +2,14 @@ import { Dice3D, DiceBox, DiceFactory, DSNMesh } from "@/types/dsn";
 import { faceQuats, getDice3d, getFaceQuaternion } from "@/utils/dsn";
 import { Group, Matrix4, Vector3 } from "three";
 
-/** On-screen radius, in CSS pixels, of a die when we have to size it ourselves (Dice So Nice 6+). */
-const DIE_RADIUS_PX = 48;
+/**
+ * The module's dice layout uses units of half a CSS pixel (e.g. portraits are 128px apart and the
+ * dice are spaced 256 units apart; every offset in the animations is doubled).
+ */
+const CSS_PX_PER_UNIT = 0.5;
+
+/** Radius, in layout units, of a die when we have to size it ourselves (Dice So Nice 6+). */
+const DIE_RADIUS_UNITS = 90;
 
 class DiceBoxManager {
     private static _instance: DiceBoxManager;
@@ -150,7 +156,7 @@ class DiceBoxManager {
                 const geometry = (dicemesh as any).geometry;
                 geometry?.computeBoundingSphere?.();
                 const radius = geometry?.boundingSphere?.radius;
-                if (radius > 0) dicemesh.scale.setScalar(DIE_RADIUS_PX / radius);
+                if (radius > 0) dicemesh.scale.setScalar(DIE_RADIUS_UNITS / radius);
                 rig.add(dicemesh);
             } else {
                 this.box!.scene.add(dicemesh);
@@ -252,21 +258,21 @@ class DiceBoxManager {
         if (!(dist > 0)) dist = (camera.near + camera.far) / 2;
         dist = Math.min(Math.max(dist, camera.near * 4), camera.far * 0.9);
 
-        // Metres per CSS pixel on that plane
+        // Metres per layout unit on that plane
         const heightPx = this.container?.clientHeight || window.innerHeight;
         const fovRad = ((camera.fov ?? 20) * Math.PI) / 180;
         const visibleHeight = 2 * dist * Math.tan(fovRad / 2) / (camera.zoom || 1);
-        const metresPerPx = visibleHeight / heightPx;
+        const metresPerUnit = (visibleHeight / heightPx) * CSS_PX_PER_UNIT;
 
         // Lift the dice slightly towards the camera so they sit above the table surface
         const centre = camPos
             .clone()
-            .add(forward.multiplyScalar(dist - DIE_RADIUS_PX * 1.5 * metresPerPx));
+            .add(forward.multiplyScalar(dist - DIE_RADIUS_UNITS * 1.5 * metresPerUnit));
 
         const basis = new Matrix4().makeBasis(right, up, toward);
         this.rig.quaternion.setFromRotationMatrix(basis);
         this.rig.position.copy(centre);
-        this.rig.scale.setScalar(metresPerPx);
+        this.rig.scale.setScalar(metresPerUnit);
         this.rig.updateMatrixWorld(true);
     }
 
