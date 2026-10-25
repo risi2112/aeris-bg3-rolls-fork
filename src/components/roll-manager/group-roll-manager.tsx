@@ -7,6 +7,16 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { GroupRollChat } from "../chat-message/group-roll-chat-message";
 import { GroupRollCard } from "./group-roll-card";
 
+/** Sum of the kept results of the roll's first d20 (or first die if there is no d20). */
+function keptD20(roll: Roll): number {
+    const die =
+        roll.dice.find((d) => d.faces === 20) ?? roll.dice[0];
+    if (!die) return 0;
+    return die.results
+        .filter((res) => res.active !== false && !res.discarded)
+        .reduce((sum, res) => sum + (res.result ?? 0), 0);
+}
+
 export const GroupRollManager = () => {
     const persisted = game.settings.get(
         "aeris-bg3-rolls",
@@ -197,11 +207,10 @@ export const GroupRollManager = () => {
                         }))
                     ),
                     formula: r.roll.formula,
-                    modifier: r.roll.terms
-                        .filter(
-                            (t) => t instanceof foundry.dice.terms.NumericTerm
-                        )
-                        .reduce((sum, t: any) => sum + t.number, 0),
+                    // Everything that isn't the kept d20: proficiency, ability, and bonuses
+                    // that aren't plain numbers (e.g. auras or effects added as formulas),
+                    // which summing only the numeric terms used to miss.
+                    modifier: (r.roll.total ?? 0) - keptD20(r.roll),
                 })),
                 targetValue: groupRoll.targetValue,
                 promptHeader: groupRoll.promptHeader,

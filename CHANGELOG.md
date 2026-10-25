@@ -1,3 +1,11 @@
+## v14.0.11
+
+### Fixed
+
+-   The chat card's modifier now includes every bonus in the roll (e.g. a Paladin's Aura of
+    Protection). It only summed plain-number terms, so the total was right but the "+N" shown
+    next to the die was too low.
+
 ## v14.0.10
 
 ### Fixed
