@@ -1,3 +1,12 @@
+## v14.0.10
+
+### Fixed
+
+-   Dice no longer vanish when the result is revealed (the reveal animation set the die's scale to
+    absolute values, which shrank the resized Dice So Nice 6 dice to nothing)
+-   Smaller dice
+-   If the die face can't be relabelled with the total, the total appears above the portrait
+
 ## v14.0.9
 
 ### Fixed

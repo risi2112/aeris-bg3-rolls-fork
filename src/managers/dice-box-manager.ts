@@ -9,7 +9,7 @@ import { Group, Matrix4, Vector3 } from "three";
 const CSS_PX_PER_UNIT = 0.5;
 
 /** Radius, in layout units, of a die when we have to size it ourselves (Dice So Nice 6+). */
-const DIE_RADIUS_UNITS = 90;
+const DIE_RADIUS_UNITS = 60;
 
 class DiceBoxManager {
     private static _instance: DiceBoxManager;
@@ -152,11 +152,20 @@ class DiceBoxManager {
 
             const rig = this.ensureRig();
             if (rig) {
-                // Dice So Nice 6 builds dice in its own units; size them in screen pixels
+                // Dice So Nice 6 builds dice in its own units. Resize the die's own copy of the
+                // geometry (not mesh.scale, which the reveal animation sets to absolute values
+                // like 1.2 and would otherwise shrink the die to nothing).
                 const geometry = (dicemesh as any).geometry;
                 geometry?.computeBoundingSphere?.();
                 const radius = geometry?.boundingSphere?.radius;
-                if (radius > 0) dicemesh.scale.setScalar(DIE_RADIUS_UNITS / radius);
+                if (radius > 0 && typeof geometry.clone === "function") {
+                    const sized = geometry.clone();
+                    const f = DIE_RADIUS_UNITS / radius;
+                    sized.scale(f, f, f);
+                    sized.computeBoundingSphere?.();
+                    (dicemesh as any).geometry = sized;
+                    dicemesh.userData.ownsGeometry = true;
+                }
                 rig.add(dicemesh);
             } else {
                 this.box!.scene.add(dicemesh);
@@ -205,6 +214,7 @@ class DiceBoxManager {
     private _actuallyRemoveDie(id: string, mesh: DSNMesh) {
         if (!this.box) return;
         (mesh as any).parent?.remove(mesh);
+        if (mesh.userData?.ownsGeometry) (mesh as any).geometry?.dispose?.();
         const diceList = (this.box as any).diceList;
         if (Array.isArray(diceList)) {
             (this.box as any).diceList = diceList.filter((m: DSNMesh) => m !== mesh);

@@ -16,7 +16,9 @@ export const useDiceAnimation2 = (
         result: number;
         modified: number;
     }[],
-    modifierRef: React.RefObject<HTMLDivElement | null>
+    modifierRef: React.RefObject<HTMLDivElement | null>,
+    /** Called with the total when the die face can't be relabelled (newer Dice So Nice). */
+    onTotalFallback?: (total: string) => void
 ) => {
     const actorUuid = actor.uuid;
     useEffect(() => {
@@ -171,13 +173,15 @@ export const useDiceAnimation2 = (
                     delay: 0.1,
                     ease: "power2.out",
                     onStart: () => {
+                        const total = configs[maxIndex].modified.toString();
+                        let ok = false;
                         try {
-                            overrideDieFaceLabel(
+                            ok = overrideDieFaceLabel(
                                 targetMesh,
                                 "d20",
                                 actor,
                                 configs[maxIndex].result + 1,
-                                configs[maxIndex].modified.toString()
+                                total
                             );
                         } catch (err) {
                             console.warn(
@@ -185,6 +189,7 @@ export const useDiceAnimation2 = (
                                 err
                             );
                         }
+                        if (!ok) onTotalFallback?.(total);
                     },
                 },
                 "<"

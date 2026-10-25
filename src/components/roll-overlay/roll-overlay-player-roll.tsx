@@ -64,6 +64,10 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
 
     const modifierRef = useRef<HTMLDivElement>(null);
 
+    // Shown when Dice So Nice can't relabel the die face with the total (Dice So Nice 6+)
+    const [fallbackTotal, setFallbackTotal] = useState<string | null>(null);
+    useEffect(() => setFallbackTotal(null), [groupRollId]);
+
     const { elementRef, show, hide } = useGsapToggle({
         from: { duration: 0.75, y: 50, opacity: 0, ease: "expo.out" },
         to: { duration: 0.75, y: 0, opacity: 1, delay: requestIndex * 0.2 },
@@ -146,7 +150,8 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
         groupRollId,
         actor,
         configs,
-        modifierRef
+        modifierRef,
+        setFallbackTotal
     );
 
     return (
@@ -176,6 +181,11 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                             )}
                         >
                             {modifier > 0 ? `+${modifier}` : modifier}
+                        </div>
+                    )}
+                    {fallbackTotal && (
+                        <div className="absolute left-1/2 top-[-6px] -translate-x-1/2 -translate-y-full rounded-md bg-black/70 px-2 text-[26px] font-black leading-tight text-white z-[30] shadow-lg">
+                            {fallbackTotal}
                         </div>
                     )}
                     <div className="absolute left-1/2 top-[115px] -translate-x-1/2 -translate-y-1/2 text-[15px] font-bold text-center text-white z-[12]">

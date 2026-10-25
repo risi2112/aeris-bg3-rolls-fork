@@ -9,7 +9,7 @@ export function overrideDieFaceLabel(
     actor: Actor,
     faceIndex: number,
     newValue: string
-) {
+): boolean {
     const savedMaterial: Material | undefined = mesh.userData.modifierMaterial;
     if (savedMaterial) {
         const oldMaterials = Array.isArray(mesh.material)
@@ -18,6 +18,7 @@ export function overrideDieFaceLabel(
 
         mesh.material = savedMaterial;
         oldMaterials.forEach((m) => m.dispose());
+        return true;
     } else {
         const generated = generateMaterial(
             mesh,
@@ -26,11 +27,12 @@ export function overrideDieFaceLabel(
             faceIndex,
             newValue
         );
-        if (!generated) return;
+        if (!generated) return false;
         const { oldMaterials, newMaterial } = generated;
         mesh.material = newMaterial;
 
         oldMaterials.forEach((m) => m.dispose());
+        return true;
     }
 }
 
