@@ -121,8 +121,12 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
     });
 
     useEffect(() => {
-        if (isVisible) show();
-        else hide();
+        if (isVisible) {
+            // Undo the previous reveal (the modifier flies into the die and fades out)
+            if (modifierRef.current) gsap.set(modifierRef.current, { clearProps: "all" });
+            setFallbackTotal(null);
+            show();
+        } else hide();
     }, [isVisible, show, hide]);
 
     const handleRollClick = useCallback(async () => {

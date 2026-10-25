@@ -234,8 +234,10 @@ export const GroupRollManager = () => {
 
     /** Reset a finished (or stuck) roll to pending with the same settings and roll it again. */
     const handleRollAgain = (roll: GroupRoll) => {
+        // A fresh id, so the overlay treats it as a new roll: per-roll state such as the
+        // faded-out modifiers from the last reveal is keyed by id and would otherwise carry over.
         const pending: PendingGroupRoll = {
-            id: roll.id,
+            id: foundry.utils.randomID() as GroupRollId,
             status: "pending",
             promptHeader: roll.promptHeader,
             promptSubheader: roll.promptSubheader,
@@ -247,7 +249,7 @@ export const GroupRollManager = () => {
                 .map((r) => ({ actor: r.actor })),
         };
         updateRolls((prev) => prev.map((r) => (r.id === roll.id ? pending : r)));
-        void handleInitiateRoll(roll.id, pending);
+        void handleInitiateRoll(pending.id, pending);
     };
 
     const handleSelectTokens = (rollId: string) => {

@@ -1,3 +1,10 @@
+## v14.0.12
+
+### Fixed
+
+-   Modifiers on the portraits were missing when a roll was rolled again (they stayed faded out from
+    the previous reveal). Roll again now starts a fresh roll, and each roll resets the portraits.
+
 ## v14.0.11
 
 ### Fixed
