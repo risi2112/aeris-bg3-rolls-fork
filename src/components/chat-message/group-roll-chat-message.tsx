@@ -17,6 +17,8 @@ interface GroupRollChatProps {
         modifier: number;
         /** The character's own modifier (newer messages only) */
         baseModifier?: number;
+        /** What makes up the character's modifier, e.g. DEX +3, PB +3 (newer messages only) */
+        baseParts?: { value: number; label: string }[];
         /** Other bonuses such as auras or bonus dice (newer messages only) */
         bonuses?: { value: number; label: string }[];
     }[];
@@ -155,8 +157,12 @@ export const GroupRollChat: React.FC<GroupRollChatProps> = ({
 };
 
 const fmt = (n: number) => (n < 0 ? `- ${Math.abs(n)}` : `+ ${n}`);
+const isGeneric = (label?: string) => !label || label.trim().toLowerCase() === "bonus";
 
-/** "+ 6  + 4 (aura)": the character's modifier, then each other bonus in a different colour. */
+/**
+ * "+ 6  + 4": the character's modifier (hover for e.g. "DEX +3, PB +3"), then any other
+ * bonuses in amber, with the effect's name if the roll has a specific one.
+ */
 const ModifierBreakdown: React.FC<{
     roll: GroupRollChatProps["rolls"][number];
 }> = ({ roll }) => {
@@ -166,10 +172,13 @@ const ModifierBreakdown: React.FC<{
             <span className="text-muted-foreground">{fmt(roll.modifier)}</span>
         ) : null;
     }
+    const baseTitle = (roll.baseParts ?? [])
+        .map((p) => `${p.label || "mod"} ${p.value < 0 ? p.value : `+${p.value}`}`)
+        .join(", ");
     return (
-        <>
+        <span className="flex items-baseline gap-2 whitespace-nowrap">
             {roll.baseModifier !== 0 && (
-                <span className="text-muted-foreground" title="Character modifier">
+                <span className="text-foreground" title={baseTitle || "Character modifier"}>
                     {fmt(roll.baseModifier)}
                 </span>
             )}
@@ -177,16 +186,16 @@ const ModifierBreakdown: React.FC<{
                 <span
                     key={i}
                     className="text-amber-400"
-                    title={bonus.label}
+                    title={isGeneric(bonus.label) ? "Bonus (effects, auras)" : bonus.label}
                 >
                     {fmt(bonus.value)}
-                    {bonus.label && bonus.label !== "bonus" && (
-                        <span className="ml-0.5 text-[10px] font-normal opacity-80">
-                            ({bonus.label})
+                    {!isGeneric(bonus.label) && (
+                        <span className="ml-1 text-[10px] font-normal opacity-75">
+                            {bonus.label}
                         </span>
                     )}
                 </span>
             ))}
-        </>
+        </span>
     );
 };

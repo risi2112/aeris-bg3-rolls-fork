@@ -197,15 +197,19 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                             {breakdown ? (
                                 <>
                                     {breakdown.base !== 0 && signed(breakdown.base)}
-                                    {breakdown.bonuses.map((b, i) => (
+                                    {breakdown.bonuses.length > 0 && (
                                         <span
-                                            key={i}
-                                            className="ml-0.5 text-amber-400"
-                                            title={b.label}
+                                            className="ml-1 text-amber-400"
+                                            title="Bonuses from effects and auras"
                                         >
-                                            {signed(b.value)}
+                                            {signed(
+                                                breakdown.bonuses.reduce(
+                                                    (sum, b) => sum + b.value,
+                                                    0
+                                                )
+                                            )}
                                         </span>
-                                    ))}
+                                    )}
                                 </>
                             ) : modifier > 0 ? (
                                 `+${modifier}`

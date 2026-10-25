@@ -1,3 +1,11 @@
+## v14.0.14
+
+### Changed
+
+-   Cleaner modifier display: ability and proficiency are combined into one white number (hover the
+    chat card number to see e.g. "DEX +3, PB +3"); other bonuses follow in amber, labelled only when
+    the roll names a specific effect
+
 ## v14.0.13
 
 ### Changed

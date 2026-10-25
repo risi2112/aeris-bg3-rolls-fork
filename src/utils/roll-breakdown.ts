@@ -8,8 +8,10 @@ export interface RollBonus {
 export interface RollBreakdown {
     /** Sum of the kept results of the main d20 */
     kept: number;
-    /** The character's own modifier: the plain numbers in the formula (ability, proficiency, ...) */
+    /** The character's own modifier: ability, proficiency and other plain numbers */
     base: number;
+    /** The pieces of the base modifier, e.g. DEX +3, PB +3 */
+    baseParts: RollBonus[];
     /** Everything else: bonus dice (e.g. Bless) and bonuses added as formulas (e.g. auras, effects) */
     bonuses: RollBonus[];
     /** base + all bonuses, i.e. total minus the kept d20 */
@@ -34,7 +36,9 @@ export function getRollBreakdown(roll: Roll): RollBreakdown {
         .reduce((sum: number, r: any) => sum + (r.result ?? 0), 0);
 
     let base = 0;
+    const baseParts: RollBonus[] = [];
     const bonuses: RollBonus[] = [];
+    const isCharacterFlavor = characterFlavorTest();
     let sign = 1;
     terms.forEach((term: any, index: number) => {
         if (term instanceof OperatorTerm) {
@@ -46,8 +50,11 @@ export function getRollBreakdown(roll: Roll): RollBreakdown {
         sign = 1;
         if (!value) return;
         const flavor: string | undefined = term.flavor || term.options?.flavor;
-        if (term instanceof NumericTerm && !flavor) {
+        // dnd5e labels its terms, e.g. 3[DEX] 3[PB] 4[Bonus]: ability and proficiency
+        // count as the character's modifier, anything else is a bonus
+        if (term instanceof NumericTerm && (!flavor || isCharacterFlavor(flavor))) {
             base += value;
+            baseParts.push({ value, label: flavor ?? "" });
         } else {
             bonuses.push({
                 value,
@@ -61,7 +68,19 @@ export function getRollBreakdown(roll: Roll): RollBreakdown {
     const rest = total - accounted;
     if (rest) bonuses.push({ value: rest, label: "bonus" });
 
-    return { kept, base, bonuses, modifier: total - kept };
+    return { kept, base, baseParts, bonuses, modifier: total - kept };
+}
+
+/** Flavors that belong to the character's own modifier: ability scores and proficiency. */
+function characterFlavorTest(): (flavor: string) => boolean {
+    const names = new Set(["pb", "prof", "proficiency", "mod", "ability"]);
+    const abilities = (CONFIG as any).DND5E?.abilities ?? {};
+    for (const [key, cfg] of Object.entries<any>(abilities)) {
+        names.add(key.toLowerCase());
+        if (cfg?.abbreviation) names.add(String(game.i18n.localize(cfg.abbreviation)).toLowerCase());
+        if (cfg?.label) names.add(String(game.i18n.localize(cfg.label)).toLowerCase());
+    }
+    return (flavor) => names.has(flavor.trim().toLowerCase());
 }
 
 /** "+3", "-1" */

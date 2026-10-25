@@ -205,6 +205,7 @@ export const GroupRollManager = () => {
                         return {
                             modifier: b.modifier,
                             baseModifier: b.base,
+                            baseParts: b.baseParts,
                             bonuses: b.bonuses,
                         };
                     })(),
